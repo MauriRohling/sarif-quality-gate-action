@@ -1,0 +1,1 @@
+# sarif-quality-gate-action
