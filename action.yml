@@ -1,0 +1,40 @@
+name: 'Sarif Quality Gate'
+description: 'Counts the rule violations in a SARIF file and pass or fails based on the maximum violations threshold specified.'
+branding:
+  icon: 'check-square'
+  color: 'green'
+
+inputs:
+  sarif-file-path:
+    description: 'Path to the SARIF file to check, accepts any file format as long as the content is a valid SARIF'
+    required: true
+  max-errors:
+    description: 'Maximum number of errors allowed, unlimited if not provided'
+    required: false
+  max-warnings:
+    description: 'Maximum number of warnings allowed, unlimited if not provided'
+    required: false
+  max-notes:
+    description: 'Maximum number of notes allowed, unlimited if not provided'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - run: if [[ -f ${{github.action_path}}/src/requirements.txt ]]; then pip install -r ${{github.action_path}}/src/requirements.txt >> /dev/null; fi
+      shell: bash
+    - run: |
+        echo "SARIF_FILE_PATH=${{ inputs.sarif-file-path }}" >> $GITHUB_ENV
+        echo "MAX_ERRORS=${{ inputs.max-errors }}" >> $GITHUB_ENV
+        echo "MAX_WARNINGS=${{ inputs.max-warnings }}" >> $GITHUB_ENV
+        echo "MAX_NOTES=${{ inputs.max-notes }}" >> $GITHUB_ENV
+      shell: bash
+    - id: quality-gate-check
+      run: python ${{github.action_path}}/src/action.py
+      shell: bash
+
+outputs:
+  quality-gate-status:
+    description: >
+      The resulting Quality Gate Status value of PASSED or FAILED
+    value: ${{ steps.quality-gate-check.outputs.quality-gate-status }}
